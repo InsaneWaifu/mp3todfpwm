@@ -63,8 +63,8 @@ async fn accept_connection(stream: TcpStream) {
         stdoutt = "-";
     }
     let prog;
-    if args.len() > 1 {
-        prog = args[1].as_str();
+    if args.len() > 2 {
+        prog = args[2].as_str();
     } else {
         prog = "ffmpeg";
     }
