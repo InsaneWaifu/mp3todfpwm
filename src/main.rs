@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::convert::Infallible;
 use std::future::Future;
 use std::{env, io};
-use std::net::SocketAddr;
+use std::net::{SocketAddr, ToSocketAddrs};
 use std::process::Stdio;
 use futures_util::stream::StreamExt;
 
@@ -13,6 +13,7 @@ use tokio::io::{AsyncReadExt, BufReader};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::process::Command;
 use tokio_tungstenite::tungstenite::Message;
+use url::Url;
 
 
 #[tokio::main]
@@ -49,7 +50,19 @@ async fn accept_connection(stream: TcpStream) {
     let (mut write, mut read) = ws_stream.split();
     if let Some(x) = read.next().await {
         if let Ok(Message::Text(t)) = x {
-            url = t;
+            // it seems weird but we will resolve the dns name
+            // because ffmpeg doesnt want to on the build i downloaded and i cba to compile it
+            let mut ur = Url::parse(&t).unwrap();
+            let origport = ur.port();
+            let mut new_host_string = ur.host_str().unwrap().to_owned();
+            if ur.port().is_none() {
+                new_host_string = new_host_string + ":80"
+            }
+            let hosts = new_host_string.to_socket_addrs().unwrap().collect::<Vec<_>>();
+            let sars = hosts.first().unwrap();
+            ur.set_host(Some(&sars.ip().to_string())).unwrap();
+            ur.set_port(origport).unwrap();
+            url = ur.to_string();
         } else {
             return ;
         }
