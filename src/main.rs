@@ -33,6 +33,9 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn accept_connection(stream: TcpStream) {
+    
+    let args: Vec<String> = env::args().collect();
+    
     let addr = stream.peer_addr().expect("connected streams should have a peer address");
     info!("Peer address: {}", addr);
 
@@ -59,7 +62,13 @@ async fn accept_connection(stream: TcpStream) {
     } else {
         stdoutt = "-";
     }
-    let mut cmd = Command::new("ffmpeg").arg("-i").arg(url).arg("-ac").arg("1").arg("-c:a").arg("dfpwm").arg("-ar").arg("48k").arg("-f").arg("dfpwm").arg(stdoutt)
+    let prog;
+    if args.len() > 1 {
+        prog = args[1].as_str();
+    } else {
+        prog = "ffmpeg";
+    }
+    let mut cmd = Command::new(prog).arg("-i").arg(url).arg("-ac").arg("1").arg("-c:a").arg("dfpwm").arg("-ar").arg("48k").arg("-f").arg("dfpwm").arg(stdoutt)
     .stdout(Stdio::piped()).spawn().unwrap();
     
    
